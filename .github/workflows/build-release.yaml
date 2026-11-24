@@ -5,6 +5,10 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -97,10 +101,17 @@ jobs:
             name: app-${{ github.sha }}
             path: standalone/release/*
       
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          awk -v ver="## ${RELEASE_VERSION}" '$0==ver{f=1;next} /^## /{f=0} f' CHANGELOG.md > release-notes.md
+          cat release-notes.md
+
       - name: Release TizenTube Build Results
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.RELEASE_VERSION }}
+          name: TizenTube ${{ env.RELEASE_VERSION }}
+          body_path: release-notes.md
           target_commitish: ${{ github.sha }}
           files: |
             standalone/release/*
